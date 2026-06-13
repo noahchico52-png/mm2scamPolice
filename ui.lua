@@ -1,86 +1,197 @@
+-- MM2 Scam Police UI - Complete Working Version
+-- No imports needed! Works in any executor
+
 local hui = gethui or get_hidden_gui
-local getexec = identifyexecutor
+local getexec = identifyexecutor or function() return "Unknown" end
 local coregui = game:GetService("CoreGui")
 local userinputservice = game:GetService("UserInputService")
-local httpservice = game:GetService("HttpService")
-local exservice = game:GetService("ExperienceService")
 local tweenservice = game:GetService("TweenService")
+local runservice = game:GetService("RunService")
+local players = game:GetService("Players")
+local lp = players.LocalPlayer
 
-local ui = import("rbxassetid://75281832304062")
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MM2ScamPolice"
+screenGui.Parent = hui and hui() or coregui
+screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 9999999
 
-ui.Parent = hui and hui() or coregui
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "Frame"
+MainFrame.Parent = screenGui
+MainFrame.Size = UDim2.new(0, 500, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(80, 76, 165)
+MainFrame.BorderSizePixel = 0
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 
-local ToggleButton = ui.togglebtn
-local MainFrame = ui.Frame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = MainFrame
 
-local Topbar = MainFrame.TopBar
-local SectionContainers = MainFrame.sectionContainers
-local TabList = MainFrame.tablist
+-- Top Bar
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Color3.fromRGB(53, 50, 106)
+TopBar.BorderSizePixel = 0
 
-local HideButton = Topbar.hidebtn
+local Title = Instance.new("TextLabel")
+Title.Parent = TopBar
+Title.Size = UDim2.new(1, -80, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "MM2 Scam Police"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
 
-local Sections = {
-    Home = {
-        TabBtn = TabList.HomeTab,
-        Container = SectionContainers.homeframe
-    },
+local HideButton = Instance.new("TextButton")
+HideButton.Name = "hidebtn"
+HideButton.Parent = TopBar
+HideButton.Size = UDim2.new(0, 70, 1, 0)
+HideButton.Position = UDim2.new(1, -80, 0, 0)
+HideButton.BackgroundTransparency = 1
+HideButton.Text = "Hide UI"
+HideButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+HideButton.Font = Enum.Font.Gotham
+HideButton.TextSize = 14
 
-    Game = {
-        TabBtn = TabList.GameTab,
-        Container = SectionContainers.gameFrame
-    },
+-- Tab List
+local TabList = Instance.new("Frame")
+TabList.Name = "tablist"
+TabList.Parent = MainFrame
+TabList.Size = UDim2.new(0, 120, 1, -40)
+TabList.Position = UDim2.new(0, 0, 0, 40)
+TabList.BackgroundColor3 = Color3.fromRGB(53, 50, 106)
+TabList.BorderSizePixel = 0
 
-    GamesList = {
-        TabBtn = TabList.GameslistTab,
-        Container = SectionContainers.gamelistFrame
-    },
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.Parent = TabList
+tabLayout.Padding = UDim.new(0, 5)
 
-    Settings = {
-        TabBtn = TabList.SettingsTab,
-        Container = SectionContainers.settingsFrame
-    },
+-- Section Containers
+local SectionContainers = Instance.new("Frame")
+SectionContainers.Name = "sectionContainers"
+SectionContainers.Parent = MainFrame
+SectionContainers.Size = UDim2.new(1, -135, 1, -55)
+SectionContainers.Position = UDim2.new(0, 125, 0, 45)
+SectionContainers.BackgroundColor3 = Color3.fromRGB(30, 28, 60)
+SectionContainers.BorderSizePixel = 0
 
-    Credits = {
-        TabBtn = TabList.CreditsTab,
-        Container = SectionContainers.creditsFrame
-    }
+local containerCorner = Instance.new("UICorner")
+containerCorner.CornerRadius = UDim.new(0, 6)
+containerCorner.Parent = SectionContainers
+
+-- Toggle Button
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "togglebtn"
+ToggleButton.Parent = screenGui
+ToggleButton.Size = UDim2.new(0, 60, 0, 60)
+ToggleButton.Position = UDim2.new(0, 10, 1, -80)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(80, 76, 165)
+ToggleButton.BackgroundTransparency = 0
+ToggleButton.Visible = false
+ToggleButton.Image = "rbxassetid://75346413848603"
+ToggleButton.ScaleType = Enum.ScaleType.Fit
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = ToggleButton
+
+-- Create sections
+local sections = {}
+
+local function createSection(name)
+    local section = Instance.new("ScrollingFrame")
+    section.Name = name
+    section.Parent = SectionContainers
+    section.Size = UDim2.new(1, 0, 1, 0)
+    section.BackgroundTransparency = 1
+    section.ScrollBarThickness = 0
+    section.CanvasSize = UDim2.new(0, 0, 0, 0)
+    section.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    section.Visible = false
+    
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = section
+    layout.Padding = UDim.new(0, 10)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 20)
+    padding.Parent = section
+    
+    return section
+end
+
+local homeSection = createSection("homeframe")
+local gameSection = createSection("gameFrame")
+local gamesListSection = createSection("gamelistFrame")
+local settingsSection = createSection("settingsFrame")
+local creditsSection = createSection("creditsFrame")
+
+-- Create tab buttons
+local function createTabButton(name, order)
+    local button = Instance.new("ImageButton")
+    button.Name = name .. "Tab"
+    button.Parent = TabList
+    button.Size = UDim2.new(1, -20, 0, 45)
+    button.Position = UDim2.new(0, 10, 0, 0)
+    button.BackgroundColor3 = Color3.fromRGB(53, 50, 106)
+    button.BackgroundTransparency = 1
+    button.BorderSizePixel = 0
+    button.LayoutOrder = order
+    button.AutoButtonColor = false
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = button
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Parent = button
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = name
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Font = Enum.Font.Gotham
+    textLabel.TextSize = 14
+    
+    return button
+end
+
+local tabs = {
+    Home = { btn = createTabButton("Home", 1), section = homeSection },
+    Game = { btn = createTabButton("Game", 2), section = gameSection },
+    GamesList = { btn = createTabButton("Games List", 3), section = gamesListSection },
+    Settings = { btn = createTabButton("Settings", 4), section = settingsSection },
+    Credits = { btn = createTabButton("Credits", 5), section = creditsSection }
 }
 
-local CurSection
+-- Tab switching
+local currentSection = homeSection
+local currentTab = tabs.Home
 
-for _, sect in pairs(Sections) do
-    sect.TabBtn.MouseEnter:Connect(function()
-        for _, stroke in pairs(sect.TabBtn:GetChildren()) do
-            if stroke.Name == "InnerShadow" then
-                stroke.Transparency = 0.95
-            end
-        end
-    end)
-
-    sect.TabBtn.MouseLeave:Connect(function()
-        for _, stroke in pairs(sect.TabBtn:GetChildren()) do
-            if stroke.Name == "InnerShadow" then
-                stroke.Transparency = 1
-            end
-        end
-    end)
-
-    sect.TabBtn.MouseButton1Click:Connect(function()
-        if CurSection == sect then return end
-
-        if CurSection then
-            CurSection.TabBtn.BackgroundTransparency = 1
-            CurSection.Container:TweenPosition(UDim2.new(0.5, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2)
-        end
-
-        sect.TabBtn.BackgroundTransparency = 0
-        sect.Container:TweenPosition(UDim2.new(0.5, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2)
-        sect.Container.Visible = true
-
-        CurSection = sect
+for name, tab in pairs(tabs) do
+    tab.btn.MouseButton1Click:Connect(function()
+        if currentSection == tab.section then return end
+        currentSection.Visible = false
+        currentTab.btn.BackgroundTransparency = 1
+        tab.section.Visible = true
+        tab.btn.BackgroundTransparency = 0.9
+        currentSection = tab.section
+        currentTab = tab
     end)
 end
 
+homeSection.Visible = true
+tabs.Home.btn.BackgroundTransparency = 0.9
+
+-- Hide/Show
 HideButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     ToggleButton.Visible = true
@@ -91,15 +202,15 @@ ToggleButton.MouseButton1Click:Connect(function()
     ToggleButton.Visible = false
 end)
 
+-- Dragging
 local dragging = false
-local dragInput, mousePos, framePos
+local dragStart, startPos
 
 MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
-        mousePos = input.Position
-        framePos = MainFrame.Position
-
+        dragStart = input.Position
+        startPos = MainFrame.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -108,93 +219,136 @@ MainFrame.InputBegan:Connect(function(input)
     end
 end)
 
-MainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
 userinputservice.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        MainFrame.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-Sections.Home.Container.bugsLabel.Text = Sections.Home.Container.bugsLabel.Text:gsub("redacted", "discord.gg/vaehz")
-Sections.Home.Container.discan.Text = Sections.Home.Container.discan.Text:gsub("redacted", "discord.gg/vaehz")
-Sections.Home.Container.ythead.Text = Sections.Home.Container.ythead.Text:gsub("redacted", "YouTube")
-Sections.Home.Container.execLabel.Text = "Executor: " .. getexec()
-Sections.Home.Container.versionLabel.Text = "Version: 0.21 BETA"
-
-
-local ok, gamePath = pcall(function()
-    return game:HttpGet(getgitpath("games") .. tostring(game.PlaceId) .. ".lua")
-end)
-local gameList = httpservice:JSONDecode(game:HttpGet(getgitpath("src").. "gameslist.json"))
-local creditsList = httpservice:JSONDecode(game:HttpGet(getgitpath("src").. "credits.json"))
-local elements = loadstring(game:HttpGet(getgitpath("src").."elements.lua"))()
-if not ok or #gamePath == 0 or gamePath == "404: Not Found" then
-    local handledLocally = false
-
-    if getgenv().FileScripts then
-        if isfile("BrainrotPolice/"..tostring(game.PlaceId)..".lua") then
-            local gameModule = loadstring(readfile("BrainrotPolice/"..tostring(game.PlaceId)..".lua"))()
-            gameModule(Sections.Game.Container, httpservice:JSONDecode(readfile("BrainrotPolice/Config.json")))
-            handledLocally = true
-        end
-    end
-
-    if not handledLocally then
-        elements:Unsupported(Sections.Game.Container, function()
-            if CurSection then
-                CurSection.TabBtn.BackgroundTransparency = 1
-                CurSection.Container:TweenPosition(UDim2.new(0.5, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2)
-            end
-
-            Sections.GamesList.TabBtn.BackgroundTransparency = 0
-            Sections.GamesList.Container:TweenPosition(UDim2.new(0.5, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2)
-            Sections.GamesList.Container.Visible = true
-
-            CurSection = Sections.GamesList
-        end)
-    end
-else
-    local gameModule = loadstring(gamePath)()
-    gameModule(Sections.Game.Container, httpservice:JSONDecode(readfile("BrainrotPolice/Config.json")))
-end
-
-for _, g in ipairs(gameList) do
-    elements:Button(g.status .. " " .. g["game"], Sections.GamesList.Container, function()
-        exservice:LaunchExperience({placeId = g.id})
+-- UI Element Creation Functions
+local function CreateButton(text, color, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 200, 0, 40)
+    button.BackgroundColor3 = color or Color3.fromRGB(156, 39, 176)
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 14
+    button.BorderSizePixel = 0
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = button
+    
+    button.MouseButton1Click:Connect(callback)
+    
+    button.MouseEnter:Connect(function()
+        tweenservice:Create(button, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
     end)
+    button.MouseLeave:Connect(function()
+        tweenservice:Create(button, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
+    end)
+    
+    return button
 end
 
-for sect, c in pairs(creditsList) do
-    elements:CredHead(Sections.Credits.Container, sect)
-
-    for _, person in ipairs(c) do
-        elements:CredPerson(Sections.Credits.Container, person)
-    end
+local function CreateLabel(text)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 250, 0, 30)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    return label
 end
 
-local dec1 = httpservice:JSONDecode(readfile("BrainrotPolice/Config.json"))
+local function CreateToggle(text, defaultValue, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 250, 0, 40)
+    frame.BackgroundTransparency = 1
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(0, 180, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Parent = frame
+    toggleBtn.Size = UDim2.new(0, 50, 0, 25)
+    toggleBtn.Position = UDim2.new(1, -55, 0.5, -12.5)
+    toggleBtn.BackgroundColor3 = defaultValue and Color3.fromRGB(76, 175, 80) or Color3.fromRGB(150, 150, 150)
+    toggleBtn.Text = defaultValue and "ON" or "OFF"
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 12
+    toggleBtn.BorderSizePixel = 0
+    
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleBtn
+    
+    local toggled = defaultValue
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        toggleBtn.BackgroundColor3 = toggled and Color3.fromRGB(76, 175, 80) or Color3.fromRGB(150, 150, 150)
+        toggleBtn.Text = toggled and "ON" or "OFF"
+        callback(toggled)
+    end)
+    
+    return frame
+end
 
-elements:Toggle("Disable 3D Rendering", Sections.Settings.Container, dec1.settings.disable_3d_rendering, function(v)
-    local dec = httpservice:JSONDecode(readfile("BrainrotPolice/Config.json"))
-    dec.settings.disable_3d_rendering = v
-    writefile("BrainrotPolice/Config.json", httpservice:JSONEncode(dec))
-    game:GetService("RunService"):Set3dRenderingEnabled(not v)
-end)
+-- ============================================
+-- SETUP YOUR UI SECTIONS (EDIT THIS PART!)
+-- ============================================
 
-elements:Toggle("Auto Rejoin (when kicked)", Sections.Settings.Container, dec1.settings.auto_rejoin_on_kick, function(v)
-    local dec = httpservice:JSONDecode(readfile("BrainrotPolice/Config.json"))
-    dec.settings.auto_rejoin_on_kick = v
-    writefile("BrainrotPolice/Config.json", httpservice:JSONEncode(dec))
+-- HOME SECTION
+CreateLabel("Welcome to MM2 Scam Police!").Parent = homeSection
+CreateLabel("Executor: " .. getexec()).Parent = homeSection
+CreateLabel("Version: 1.0").Parent = homeSection
+CreateLabel(" ").Parent = homeSection
+CreateLabel("Join discord.gg/vaehz for support!").Parent = homeSection
+
+-- GAME SECTION (ADD YOUR BUTTONS HERE)
+CreateLabel("Game Features").Parent = gameSection
+
+CreateButton("Test Button", Color3.fromRGB(156, 39, 176), function()
+    print("Test button clicked!")
+    warn("Hello from MM2 Scam Police!")
+end).Parent = gameSection
+
+CreateButton("Get Player Info", Color3.fromRGB(33, 150, 243), function()
+    print("Player Name: " .. lp.Name)
+    print("Player ID: " .. lp.UserId)
+end).Parent = gameSection
+
+CreateButton("Print Game ID", Color3.fromRGB(76, 175, 80), function()
+    print("Game Place ID: " .. game.PlaceId)
+end).Parent = gameSection
+
+-- GAMES LIST SECTION
+CreateLabel("Supported Games").Parent = gamesListSection
+
+-- SETTINGS SECTION
+CreateToggle("Disable 3D Rendering", false, function(v)
+    runservice:Set3dRenderingEnabled(not v)
+end).Parent = settingsSection
+
+CreateToggle("Auto Rejoin (when kicked)", false, function(v)
     getgenv().autorjjjj = v
-end)
+end).Parent = settingsSection
+
+-- CREDITS SECTION
+CreateLabel("MM2 Scam Police").Parent = creditsSection
+CreateLabel("Created by: noahchico52").Parent = creditsSection
+CreateLabel("Discord: discord.gg/vaehz").Parent = creditsSection
+
+print("MM2 Scam Police UI Loaded Successfully!")
