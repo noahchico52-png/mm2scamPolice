@@ -11,19 +11,10 @@ function env.import(id)
     return game:GetObjects(id)[1]
 end
 
--- Where to find your UI file
-function env.getgitpath(where)
-    local mainBuild = "https://raw.githubusercontent.com/noahchico52-png/mm2scamPolice/refs/heads/main/"
-    if where == "src" then
-        return mainBuild .. "src/"
-    end
-    return mainBuild
-end
-
--- Load your UI
-loadstring(game:HttpGet(getgitpath("src").."ui.lua"))()
+-- Load your UI (directly from root, not src folder)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/noahchico52-png/mm2scamPolice/refs/heads/main/ui.lua"))()
 
 -- Auto-reload on teleport
 if queue_on_teleport then
-    queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/noahchico52-png/mm2scamPolice/refs/heads/main/src/init.lua"))()')
+    queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/noahchico52-png/mm2scamPolice/refs/heads/main/init.lua"))()')
 end
